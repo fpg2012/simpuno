@@ -177,6 +177,7 @@ function ready() {
 function ready_ob() {
     state.value = 9;
     document.getElementById("server-area").style.display = "none";
+    document.getElementById("operation-area").style.display = "none";
     ready_button.disabled = true;
 }
 
