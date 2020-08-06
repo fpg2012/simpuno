@@ -1,0 +1,39 @@
+body {
+    width: 15em;
+    margin-left: calc((100vw - 15em)/2);
+    margin-top: 50px;
+}
+#top-card {
+    display: inline-block;
+    width: 8em;
+}
+#log-list {
+    font-size: small;
+    list-style-type: disc;
+    padding-left: 2em;
+}
+.red_card {
+    background-color: salmon;
+    font-size: larger;
+    color: darkred;
+}
+.green_card {
+    background-color: palegreen;
+    font-size: larger;
+    color: darkcyan;
+}
+.yellow_card {
+    background-color: wheat;
+    font-size: larger;
+    color: olive;
+}
+.blue_card {
+    background-color: lightblue;
+    font-size: larger;
+    color: darkslategray;
+}
+.wild_card {
+    background-color: darkslategray;
+    font-size: large;
+    color: whitesmoke;
+}

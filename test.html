@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>测试</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="stylesheet" type="text/css" href="styles.css">
+    </head>
+    <body>
+        <h1>Simple UNO</h1>
+        <div id="server-area">
+                <label for="name-text">Name: </label>
+                <input type="text" id="name-text">
+                <label for="url-text">Server: </label>
+                <input type="url" id="url-text">
+                <input id="join-button" type="button" value="Join">
+                <input id="ready-button" type="button" value="Ready" disabled="disabled">
+                <input id="ob-button" type="button" value="Observe" hidden>
+        </div>
+
+        <hr/>
+
+        <div id="users-area">
+            <p>Players: </p>
+            <ul id="user-list">
+                
+            </ul>
+        </div>
+
+        <hr/>
+
+        <div>
+            <p>Top Card: <span id="top-card"></span></p>
+        </div>
+
+        <hr/>
+
+        <div id="cards-area">
+            <p>Cards in hand: </p>
+            <ul id="card-list">
+
+            </ul>
+        </div>
+
+        <div id="operation-area">
+            <input id="use-button" value="Use" type="button" disabled="disabled">
+            <input id="draw-button" value="Draw" type="button" disabled="disabled">
+            <div id="choose-color" hidden>
+                <hr/>
+                <p>Chosen color: <span id="chosen-color"></span> </p>
+                <div id="choose-color-form">
+                    <input type="radio" id="R-radio">
+                    <label for="R-radio">R</label>
+                    <input type="radio" id="G-radio">
+                    <label for="G-radio">G</label>
+                    <input type="radio" id="B-radio">
+                    <label for="B-radio">B</label>
+                    <input type="radio" id="Y-radio">
+                    <label for="Y-radio">Y</label>
+                </div>
+            </div>
+        </div>
+
+        <hr/>
+
+        <div id="turn-info-area">
+            <p>Current player: <span id="whose-turn"></span> | <span id="turn-number" ></span></p>
+        </div>
+
+        <hr/>
+
+        <div id="chat-area">
+            <input type="text" name="content" id="message-content">
+            <input type="button" value="Say!" id="say-button">
+        </div>
+
+        <hr/>
+
+        <div id="log-area">
+            Game Log:
+            <ul id="log-list">
+                <li>Welcome!</li>
+            </ul>
+        </div>
+
+        <input type="checkbox" id="mute-box">
+        <label for="mute-box">Mute</label>
+
+        <audio src="on_turn_cut.ogg" id="on-turn-tone"></audio>
+        <script type="text/javascript" src="test.js"></script>
+    </body>
+</html>
