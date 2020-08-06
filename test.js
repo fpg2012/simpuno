@@ -64,10 +64,12 @@ join_button.onclick = function() {
     console.log("fuck")
     if(name_text.value.trim() == "") {
         alert("You should input a valid name!");
+        return;
     }
     my_name = name_text.value.trim();
     if(url_text.value.trim() == "") {
         alert("You should input a valid server url!");
+        return;
     }
     server_url = url_text.value.trim();
     socket = new WebSocket(server_url);

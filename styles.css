@@ -12,6 +12,7 @@ body {
     font-size: small !important;
     list-style-type: disc;
     padding-left: 2em;
+    list-style-type: circle;
 }
 #log-list .red_card,
 #log-list .green_card, 
@@ -22,6 +23,7 @@ body {
     width: 2em;
     text-align: center;
     display: inline-block;
+    list-style-type: disc;
 }
 #log-list .chat-message {
     font-weight: bold;
