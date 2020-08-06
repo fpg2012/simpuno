@@ -140,7 +140,7 @@ function manage(event) {
             turn_end(data.player, data.turn);
             break;
         case "chat_noti":
-            player_chat_info(data.player, data.content);
+            player_chat_info(data.player, data.content.trim());
             break;
         case "game_end":
             if(data.winner != '') {
@@ -210,6 +210,13 @@ function update_player_list(players_) {
         temp_player_line.appendChild(temp_player_ready);
         player_list.appendChild(temp_player_line);
     });
+    if(!mute_checkbox.checked) {
+        let temp_audio = document.getElementById("join1");
+        if(Math.random() > 0.5) {
+            temp_audio = document.getElementById("join2");
+        }
+        temp_audio.play();
+    }
 }
 
 // judge if the card_a and card_b are compatible 
@@ -432,8 +439,7 @@ function use_cards() {
 function use_card_others(player_name, card) {
     top_card = card;
     update_top_card();
-    log_message(
-        player_name + " use " + card);
+    use_card_message(player_name, card);
 }
 
 function log_message(message) {
@@ -443,8 +449,23 @@ function log_message(message) {
     log_list.insertBefore(new_log_line, log_list.children[0]);
 }
 
+function use_card_message(player_name, card) {
+    let new_log_line = document.createElement("li");
+    let new_log_line_c = document.createElement("span");
+    let new_log_line_t = document.createTextNode(player_name + " uses ");
+    new_log_line_c.setAttribute("class", convert_to_class[card[0]]);
+    new_log_line_c.innerText = card;
+    new_log_line.appendChild(new_log_line_t);
+    new_log_line.append(new_log_line_c);
+    log_list.insertBefore(new_log_line, log_list.children[0]);
+}
+
 function player_chat_info(player_name, message) {
-    log_message(player_name + ": " + message);
+    let new_log_line = document.createElement("li");
+    let new_log_line_t = document.createTextNode(player_name + ": " + message);
+    new_log_line.appendChild(new_log_line_t);
+    new_log_line.setAttribute("class", "chat-message")
+    log_list.insertBefore(new_log_line, log_list.children[0]);
 }
 
 function say_something() {

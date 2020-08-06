@@ -5,12 +5,30 @@ body {
 }
 #top-card {
     display: inline-block;
-    width: 8em;
+    width: 4em;
+    padding-left: 2em;
 }
 #log-list {
-    font-size: small;
+    font-size: small !important;
     list-style-type: disc;
     padding-left: 2em;
+}
+#log-list .red_card,
+#log-list .green_card, 
+#log-list .blue_card, 
+#log-list .wild_card,
+#log-list .yellow_card{
+    font-size: small;
+    width: 2em;
+    text-align: center;
+    display: inline-block;
+}
+#log-list .chat-message {
+    font-weight: bold;
+}
+.big-button {
+    height: 2em;
+    width: 4em;
 }
 .red_card {
     background-color: salmon;

@@ -8,13 +8,17 @@
     <body>
         <h1>Simple UNO</h1>
         <div id="server-area">
+            <p>
                 <label for="name-text">Name: </label>
                 <input type="text" id="name-text">
                 <label for="url-text">Server: </label>
                 <input type="url" id="url-text">
+            </p>
+            <p>
                 <input id="join-button" type="button" value="Join">
                 <input id="ready-button" type="button" value="Ready" disabled="disabled">
                 <input id="ob-button" type="button" value="Observe" hidden>
+            </p>
         </div>
 
         <hr/>
@@ -42,8 +46,8 @@
         </div>
 
         <div id="operation-area">
-            <input id="use-button" value="Use" type="button" disabled="disabled">
-            <input id="draw-button" value="Draw" type="button" disabled="disabled">
+            <input id="use-button" value="Use" type="button" disabled="disabled" class="big-button">
+            <input id="draw-button" value="Draw" type="button" disabled="disabled" style="float: right;" class="big-button">
             <div id="choose-color" hidden>
                 <hr/>
                 <p>Chosen color: <span id="chosen-color"></span> </p>
@@ -82,10 +86,14 @@
             </ul>
         </div>
 
+        <hr/>
+
         <input type="checkbox" id="mute-box">
         <label for="mute-box">Mute</label>
 
-        <audio src="on_turn_cut.ogg" id="on-turn-tone"></audio>
+        <audio src="on_turn_cut.ogg" id="on-turn-tone" volume="0.5"></audio>
+        <audio src="join.ogg" id="join1" volume="0.3"></audio>
+        <audio src="ready.ogg" id="join2" volume="0.3"></audio>
         <script type="text/javascript" src="test.js"></script>
     </body>
 </html>
