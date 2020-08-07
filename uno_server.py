@@ -1,11 +1,9 @@
-import queue
 import random
 import json
 import websockets
 import logging
 import asyncio
 import ssl
-import pathlib
 
 PLAYERS = {}
 READY_PLAYERS = set()
