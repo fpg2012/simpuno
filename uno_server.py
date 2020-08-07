@@ -88,6 +88,12 @@ async def dispose(card):
     DECK.insert(0, card)
 
 async def register(name, websocket, ob=False):
+    if name in [pl.name for pl in PLAYERS]:
+        await websocket.send(json.dumps({
+        'type': 'register_result',
+        'result': 'name_used'
+        }))
+        return
     player_id = random.randint(10000, 100000)
     while player_id in PLAYERS.keys():
         player_id = random.randint(10000, 100000)

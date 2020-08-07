@@ -94,13 +94,16 @@ function manage(event) {
     data = JSON.parse(event.data);
     switch(data.type) {
         case "register_result":
-            if(data.result != "ok") {
+            if(data.result == "ok") {
+                my_id = data.id;
+                console.log(my_id)
+                register_ok()
                 break;
             }
-            my_id = data.id;
-            console.log(my_id)
-            register_ok()
-            break;
+            else if(data.result == "name_used") {
+                alert("Name has been used by other players. Choose another name.")
+                break;
+            }
         case "ready_result":
             if(data.result == "ok") {
                 ready();
@@ -418,29 +421,17 @@ function use_cards() {
         "id": my_id,
         "cards": selected_cards_in_order
     }));
-    
-    for(let i = 0;i < selected_cards_in_order.length;i++) {
-        let temp = cards.indexOf(selected_cards_in_order[i]);
-        // console.log(i);
-        // console.log(selected_cards_in_order[i]);
-        // console.log(temp);
-        cards.splice(temp, 1);
-    }
-    update_card_list(cards);
-    // let to_remove = []
-    // for(let i = 0;i < card_list.children.length;i++) {
-    //     card_list.disabled = true;
-    //     if(card_list.children[i].children[0].checked) {
-    //         to_remove.push(card_list.children[i]);
-    //     }
-    // }
-    // for(let i = 0;i < to_remove.length;i++) {
-    //     to_remove[i].remove();
-    // }
-    selected_cards_in_order.length = 0;
 }
 
 function use_card_others(player_name, card) {
+    if(player_name == my_name) {
+        for(let i = 0;i < selected_cards_in_order.length;i++) {
+            let temp = cards.indexOf(selected_cards_in_order[i]);
+            cards.splice(temp, 1);
+        }
+        update_card_list(cards);
+        selected_cards_in_order.length = 0;
+    }
     top_card = card;
     update_top_card();
     use_card_message(player_name, card);
