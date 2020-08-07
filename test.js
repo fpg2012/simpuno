@@ -66,7 +66,7 @@ join_button.onclick = function() {
         alert("You should input a valid name!");
         return;
     }
-    if(name_text.value.length > 100) {
+    if(name_text.value.length > 20) {
         alert("Your name is too long!");
         return;
     }
