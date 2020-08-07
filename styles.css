@@ -10,7 +10,6 @@ body {
 }
 #log-list {
     font-size: small;
-    list-style-type: disc;
     padding-left: 2em;
     list-style-type: circle;
 }
@@ -27,6 +26,7 @@ body {
 }
 #log-list .chat-message {
     font-weight: bold;
+    list-style-type: disc;
 }
 .big-button {
     height: 2em;
