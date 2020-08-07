@@ -96,8 +96,8 @@ function manage(event) {
         case "register_result":
             if(data.result == "ok") {
                 my_id = data.id;
-                console.log(my_id)
-                register_ok()
+                console.log(my_id);
+                register_ok();
                 break;
             }
             else if(data.result == "name_used") {
@@ -117,10 +117,6 @@ function manage(event) {
             break;
         case "user_noti":
             console.log("players")
-            data.players.forEach(element => {
-                console.log(element.name)
-                console.log(element.ready)
-            });
             update_player_list(data.players)
             break;
         case "use_noti":
