@@ -147,6 +147,7 @@ function manage(event) {
         case "game_end":
             if(data.winner != '') {
                 alert("Winner is " + data.winner);
+                log_message("Winner is " + data.winner);
             }
             else {
                 alert("Game aborted unexpectively.");

@@ -9,7 +9,7 @@ body {
     padding-left: 2em;
 }
 #log-list {
-    font-size: small !important;
+    font-size: small;
     list-style-type: disc;
     padding-left: 2em;
     list-style-type: circle;

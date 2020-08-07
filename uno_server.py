@@ -15,6 +15,9 @@ DECK = []
 SERVER_ADDR = '0.0.0.0'
 SERVER_PORT = '9019'
 top_card = ''
+SSL = False
+CERT_FILE = None
+KEY_FILE = None
 
 COLORS = ['R', 'G', 'B', 'Y', 'W']
 CONTENTS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'X', 'R', 'A']
@@ -66,8 +69,18 @@ async def init_draw_cards():
         })
         await PLAYERS[player].websocket.send(message)
 
+def get_turn_player(turn):
+    return player_order[turn % len(player_order)]
+
 def is_synced(player_id):
-    return player_id == player_order[STATE['turn'] % len(player_order)]
+    return player_id == get_turn_player(STATE['turn'])
+
+def is_compatible(card, top_card):
+    if card[0] == 'W':
+        return True
+    if top_card[0] == 'W':
+        return True
+    return card[1] == top_card[1] or card[0] == card[0]
 
 # get the top of the deck
 async def get_top():
@@ -80,7 +93,7 @@ async def register(name, websocket, ob=False):
     player_id = random.randint(10000, 100000)
     while player_id in PLAYERS.keys():
         player_id = random.randint(10000, 100000)
-    logging.info(f"{name} join, id {id}")
+    logging.info(f"{name} join, id {player_id}")
     player = Player(player_id, name, websocket)
     PLAYERS[player_id] = player
     await websocket.send(json.dumps({
@@ -91,7 +104,6 @@ async def register(name, websocket, ob=False):
     await notify_users()
     if ob:
         await player_ready(player_id, ob=True)
-    
 
 async def unregister(websocket):
     if len(PLAYERS) == 0:
@@ -200,11 +212,36 @@ async def use_cards(player_id, cards):
     for card in cards:
         await use_card(player_id, card)
 
+def get_card_type(card):
+    if card[0] == 'W':
+        return card
+    elif '0' < card[1] < '9':
+        return 'N'
+    return card[1]  
+
 async def use_card(player_id, card):
     global top_card
     if not is_synced(player_id):
         return
+    if not is_compatible(card, top_card):
+        logging.error(f'Incompatible card {card}! top card: {top_card}')
+        return
     top_card = card
+    card_type = get_card_type(card)
+    if card_type == 'X':
+        temp = STATE['turn']
+        temp += 1
+        if get_turn_player(temp) == get_turn_player(STATE['turn']):
+            temp += 1
+        STATE['turn'] = temp
+    elif card_type == 'R':
+        pass
+    elif card_type == 'A':
+        pass
+    elif card_type == 'W0':
+        pass
+    elif card_type == 'W1':
+        pass
     await dispose(card)
     await notify_use_card(player_id, card)
 
@@ -303,16 +340,31 @@ async def start_server(websocket, path):
                 player_id = player.id
                 break
         if player_id != 0:
-            logging.error(f"{PLAYERS[player_id].name} exit.")
+            logging.error(f'{PLAYERS[player_id].name} exit.')
         if player_id in player_order:
             if STATE['value'] == 1:
                 await game_end(0)
         await unregister(websocket)
 
-ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-ssl_context.load_cert_chain('/etc/letsencrypt/live/nth233.website/fullchain.pem', '/etc/letsencrypt/live/nth233.website/privkey.pem')
 logging.getLogger().setLevel(logging.INFO)
-logging.info("Server start")
-start = websockets.serve(start_server, SERVER_ADDR, SERVER_PORT, ssl=ssl_context)
+logging.info('Load config')
+with open('config.json') as config:
+    data = json.loads(config.read())
+    if 'ssl' in data.keys() and data['ssl'] == 'yes':
+        SSL = True
+        CERT_FILE = data['cert']
+        KEY_FILE = data['key']
+    if 'addr' in data.keys():
+        SERVER_ADDR = data['addr']
+    if 'port' in data.keys():
+        SERVER_PORT = data['port']
+logging.info(f'url {SERVER_ADDR}:{SERVER_PORT}')
+logging.info('Server start')
+if SSL:
+    ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ssl_context.load_cert_chain(CERT_FILE, KEY_FILE)
+    start = websockets.serve(start_server, SERVER_ADDR, SERVER_PORT, ssl=ssl_context)
+else:
+    start = websockets.serve(start_server, SERVER_ADDR, SERVER_PORT)
 asyncio.get_event_loop().run_until_complete(start)
 asyncio.get_event_loop().run_forever()
