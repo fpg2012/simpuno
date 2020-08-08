@@ -347,7 +347,7 @@ async def start_server(websocket, path):
                 if data['action'] == 'register':
                     await register(data['name'], websocket)
                 elif data['action'] == 'ready':
-                    game_start = await player_ready(data['id'])
+                    await player_ready(data['id'])
                 else:
                     logging.error('Unknow action')
             elif STATE['value'] == 1:

@@ -37,6 +37,9 @@ async def register():
     if data['type'] == 'register_result' and data['result'] == 'ok':
         my_id = data['id']
         STATE = 1
+        return True
+    else:
+        return False
 
 async def observe():
     pass
@@ -77,8 +80,8 @@ def same_number(card_a, card_b):
     return card_a[1] == card_b[1]
 
 async def my_turn_start():
-    random_delay = random.uniform(1, 3)
-    asyncio.sleep(random_delay)
+    random_delay = random.uniform(1, 2.5)
+    await asyncio.sleep(random_delay)
     to_be_use = []
     for card in my_cards:
         if is_compatible(card, top_card):
@@ -142,8 +145,9 @@ async def update_top_card(card):
 async def start_working():
     global websocket
     websocket = await websockets.connect(SERVER_URI)
-    await register()
-    await handle_messages()
+    ok = await register()
+    if ok:
+        await handle_messages()
 
 async def game_start(card):
     global STATE

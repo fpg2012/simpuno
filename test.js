@@ -3,6 +3,7 @@ var name_text = document.getElementById("name-text");
 var url_text = document.getElementById("url-text");
 var join_button = document.getElementById("join-button");
 var ready_button = document.getElementById("ready-button");
+var ob_button = document.getElementById("ob-button")
 
 var player_list = document.getElementById("user-list");
 
@@ -82,6 +83,7 @@ join_button.onclick = function() {
 }
 
 ready_button.onclick = send_ready;
+ob_button.onclick = send_ob;
 
 document.onkeydown = function(e) {
     var e = e || window.event;
@@ -182,7 +184,6 @@ function ready() {
 
 function ready_ob() {
     state.value = 9;
-    document.getElementById("server-area").style.display = "none";
     document.getElementById("operation-area").style.display = "none";
     ready_button.disabled = true;
 }
@@ -191,6 +192,14 @@ function ready_ob() {
 function send_ready() {
     socket.send(JSON.stringify({
         "action": "ready",
+        "id": my_id
+    }));
+}
+
+// send ob request
+function send_ob() {
+    socket.send(JSON.stringify({
+        "action": "ob",
         "id": my_id
     }));
 }
@@ -346,6 +355,7 @@ function register() {
 function register_ok() {
     join_button.disabled = true;
     ready_button.disabled = false;
+    ob_button.disabled = false;
     log_message("Successfully Registered.");
 }
 
