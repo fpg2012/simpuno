@@ -41,9 +41,6 @@ async def register():
     else:
         return False
 
-async def observe():
-    pass
-
 async def ready():
     global STATE
     await websocket.send(json.dumps({
