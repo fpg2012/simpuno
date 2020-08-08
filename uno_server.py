@@ -170,10 +170,8 @@ async def player_ready(player_id, ob=False):
         'result': result
         }))
     await notify_users()
-    if len(READY_PLAYERS) == len(PLAYERS) - len(OB_PLAYERS) and len(PLAYERS) > 1:
-        return True
-    else:
-        return False
+    if len(READY_PLAYERS) == len(PLAYERS) - len(OB_PLAYERS) and len(READY_PLAYERS) > 1:
+        await start_game()
 
 async def start_game():
     init_deck()
@@ -350,8 +348,6 @@ async def start_server(websocket, path):
                     await register(data['name'], websocket)
                 elif data['action'] == 'ready':
                     game_start = await player_ready(data['id'])
-                    if game_start:
-                        await start_game()
                 else:
                     logging.error('Unknow action')
             elif STATE['value'] == 1:
