@@ -268,7 +268,6 @@ async def use_card(player_id, card):
     top_card = card
     card_type = get_card_type(card)
     if card_type == 'X':
-        logging.info("Forbid!")
         STATE['turn'].advance(skip_current=True)
     elif card_type == 'R':
         STATE['turn'].add_direction = not STATE['turn'].add_direction
