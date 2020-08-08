@@ -344,7 +344,7 @@ async def start_server(websocket, path):
             if data['action'] == 'chat':
                 await notify_player_chat(data['id'], data['content'])
             elif data['action'] == 'ob':
-                await register(data['name'], websocket, True)
+                await player_ready(data['id'], ob=True)
             elif STATE['value'] == 0:
                 if data['action'] == 'register':
                     await register(data['name'], websocket)

@@ -62,7 +62,6 @@ var my_id = 0, my_name = "hello";
 var cards, players;
 
 join_button.onclick = function() {
-    console.log("fuck")
     if(name_text.value.trim() == "") {
         alert("You should input a valid name!");
         return;
