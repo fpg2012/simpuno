@@ -25,7 +25,7 @@ CONTENTS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'X', 'R', 'A']
 # 1 - game started
 STATE = {
     'value': 0,
-    'turn': 0
+    'turn': None,
 }
 
 class Player:
@@ -34,6 +34,38 @@ class Player:
         self.id = id
         self.name = name
         self.websocket = websocket
+
+class Turn:
+
+    def __init__(self, num, cycle, add_direction=True):
+        self.base_num = num
+        self.real_num = num
+        self.next_num = num
+        self.cycle = cycle
+        self.add_direction = add_direction
+    
+    def update(self):
+        logging.info(f'{self.base_num} -> {self.next_num}')
+        self.base_num = self.next_num
+        self.real_num += 1
+
+    def add(self, step=1, skip_current=False):
+        self.next_num = (step + self.next_num) % self.cycle
+        if skip_current and self.next_num == self.base_num:
+            self.add(1)
+
+    def sub(self, step=1, skip_current=False):
+        self.next_num = (self.next_num - step) % self.cycle
+        if skip_current and self.next_num == self.base_num:
+            self.sub(1)
+
+    def advance(self, step=1, skip_current=False):
+        logging.info(f'advance! now {self.next_num}')
+        if self.add_direction:
+            self.add(step, skip_current)
+        else:
+            self.sub(step, skip_current)
+        logging.info(f'next num {self.next_num}')
 
 # generate the standard deck
 def init_deck():
@@ -67,18 +99,18 @@ async def init_draw_cards():
         })
         await PLAYERS[player].websocket.send(message)
 
-def get_turn_player(turn):
-    return player_order[turn % len(player_order)]
+def get_current_player():
+    return player_order[STATE['turn'].base_num]
 
 def is_synced(player_id):
-    return player_id == get_turn_player(STATE['turn'])
+    return player_id == get_current_player()
 
 def is_compatible(card, top_card):
     if card[0] == 'W':
         return True
     if top_card[0] == 'W':
         return True
-    return card[1] == top_card[1] or card[0] == card[0]
+    return card[1] == top_card[1] or card[0] == top_card[0]
 
 # get the top of the deck
 async def get_top():
@@ -88,7 +120,7 @@ async def dispose(card):
     DECK.insert(0, card)
 
 async def register(name, websocket, ob=False):
-    if name in [pl.name for pl in PLAYERS]:
+    if name in [pl.name for _, pl in PLAYERS.items()]:
         await websocket.send(json.dumps({
         'type': 'register_result',
         'result': 'name_used'
@@ -148,19 +180,20 @@ async def start_game():
     init_player_order()
     await notify_game_start()
     STATE['value'] = 1
-    STATE['turn'] = 0
+    STATE['turn'] = Turn(0, len(player_order))
     await init_draw_cards()
     await start_turn()
 
 async def start_turn():
     await notify_turn_start(
-        player_order[STATE['turn'] % len(player_order)], 
-        STATE['turn']
+        get_current_player(), 
+        STATE['turn'].real_num
         )
 
 async def end_turn(player_id):
-    await notify_turn_end(player_id, STATE['turn'])
-    STATE['turn'] += 1
+    await notify_turn_end(player_id, STATE['turn'].real_num)
+    STATE['turn'].advance()
+    STATE['turn'].update()
 
 async def notify_game_start():
     message = json.dumps({
@@ -214,18 +247,20 @@ async def draw_cards(player_id, num):
 
 async def use_cards(player_id, cards):
     for card in cards:
+        logging.info(card)
         await use_card(player_id, card)
 
 def get_card_type(card):
     if card[0] == 'W':
         return card
-    elif '0' < card[1] < '9':
+    elif '0' <= card[1] <= '9':
         return 'N'
-    return card[1]  
+    return card[1]
 
 async def use_card(player_id, card):
     global top_card
     if not is_synced(player_id):
+        logging.error(f'Game seem not synced. Someone try to use a card outside its turn.')
         return
     if not is_compatible(card, top_card):
         logging.error(f'Incompatible card {card}! top card: {top_card}')
@@ -233,13 +268,10 @@ async def use_card(player_id, card):
     top_card = card
     card_type = get_card_type(card)
     if card_type == 'X':
-        temp = STATE['turn']
-        temp += 1
-        if get_turn_player(temp) == get_turn_player(STATE['turn']):
-            temp += 1
-        STATE['turn'] = temp
+        logging.info("Forbid!")
+        STATE['turn'].advance(skip_current=True)
     elif card_type == 'R':
-        pass
+        STATE['turn'].add_direction = not STATE['turn'].add_direction
     elif card_type == 'A':
         pass
     elif card_type == 'W0':
@@ -280,6 +312,7 @@ async def game_end(player_id):
     DECK.clear()
     OB_PLAYERS.clear()
     STATE['value'] = 0
+    STATE['turn'] = None
 
 async def notify_game_end(player_id):
     winner_name = ''
