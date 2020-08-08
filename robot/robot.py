@@ -208,8 +208,17 @@ async def handle_messages():
     finally:
         await websocket.close()
         await reset()
-        
 
 logging.getLogger().setLevel(logging.INFO)
+logging.info('Loading config.json')
+with open('config.json') as config:
+    data = json.loads(config.read())
+    print(data)
+    if 'base_name' in data.keys():
+        MY_NAME_BASE = data['base_name']
+    if 'uri' in data.keys():
+        SERVER_URI = data['uri']
+logging.info(f'Server uri: {SERVER_URI}')
+logging.info('Start robot')
 while True:
     asyncio.get_event_loop().run_until_complete(start_working())
