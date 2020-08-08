@@ -16,7 +16,7 @@ var use_button = document.getElementById("use-button");
 var draw_button = document.getElementById("draw-button");
 
 var choose_color_area = document.getElementById("choose-color");
-var chosen_color = document.getElementById("chosen-color");
+var chosen_color_node = document.getElementById("chosen-color");
 
 var say_button = document.getElementById("say-button")
 var message_content_node = document.getElementById("message-content")
@@ -30,6 +30,7 @@ var log_example = log_list.children[0];
 var selected_cards_in_order = []
 var server_url = ""
 var top_card = ""
+var chosen_color = "R"
 
 var convert_to_class = [];
 convert_to_class["R"] = "red_card";
@@ -301,6 +302,7 @@ function disable_uncompatible_cards() {
     for(let i = 0;i < len;i++) {
         let element = card_list.children[i];
         if(is_card_comaptible(element.innerText, top_card)) {
+            element.children[0].checked = false;
             element.children[0].disabled = false;
             // console.log("not disable " + element.innerText);
         }
@@ -478,10 +480,6 @@ function say_something() {
     return false;
 }
 
-function color_chose() {
-
-}
-
 function init_color_radios() {
     let radios = choose_color_area.getElementsByTagName("input");
     for(let i = 0;i < radios.length;i++) {
@@ -492,7 +490,7 @@ function init_color_radios() {
                     radios[i].checked = false;
                 }
             }
-            chosen_color.innerText = this.id[0];
+            chosen_color_node.innerText = this.id[0];
         }
     }
 }
