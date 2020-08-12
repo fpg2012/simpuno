@@ -59,6 +59,28 @@ class Turn:
         if skip_current and self.next_num == self.base_num:
             self.sub(1)
 
+    def after_add(self, step=1, skip_current=False, temp=None):
+        if temp is None:
+            temp = self.next_num
+        temp = (step + temp) % self.cycle
+        if skip_current and temp == self.base_num:
+            temp = self.after_add(1, temp=temp)
+        return temp
+    
+    def after_sub(self, step=1, skip_current=False, temp=None):
+        if temp is None:
+            temp = self.next_num
+        temp = (temp - step) % self.cycle
+        if skip_current and temp == self.base_num:
+            temp = self.after_add(1, temp=temp)
+        return temp
+        
+    def after_advance(self, step=1, skip_current=False):
+        if self.add_direction:
+            return self.after_add(step, skip_current)
+        else:
+            return self.after_sub(step, skip_current)
+
     def advance(self, step=1, skip_current=False):
         logging.info(f'advance! now {self.next_num}')
         if self.add_direction:
@@ -101,6 +123,9 @@ async def init_draw_cards():
 
 def get_current_player():
     return player_order[STATE['turn'].base_num]
+
+def get_next_player():
+    return player_order[STATE['turn'].after_advance(1)]
 
 def is_synced(player_id):
     return player_id == get_current_player()
@@ -170,7 +195,7 @@ async def player_ready(player_id, ob=False):
         'result': result
         }))
     await notify_users()
-    if STATE == 0 and len(READY_PLAYERS) == len(PLAYERS) - len(OB_PLAYERS) and len(READY_PLAYERS) > 1:
+    if STATE['value'] == 0 and len(READY_PLAYERS) == len(PLAYERS) - len(OB_PLAYERS) and len(READY_PLAYERS) > 1:
         await start_game()
 
 async def start_game():
@@ -220,8 +245,8 @@ async def notify_draw_card(player_id, num):
         })
     await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
 
-async def draw_card(player_id):
-    if not is_synced(player_id):
+async def draw_card(player_id, should_synced=True):
+    if should_synced and not is_synced(player_id):
         return
     card = await get_top()
     message = json.dumps({
@@ -231,17 +256,19 @@ async def draw_card(player_id):
     await PLAYERS[player_id].websocket.send(message)
     await notify_draw_card(player_id, 1)
 
-async def draw_cards(player_id, num):
-    if not is_synced(player_id):
+async def draw_cards(player_id, num, should_synced=True):
+    if should_synced and not is_synced(player_id):
         return
+    logging.info(f'draw {num} cards')
     cards = []
     for _ in range(num):
-        cards.append(get_top())
+        cards.append(await get_top())
     message = json.dumps({
         'type': 'draw_cards_result',
         'cards': cards
     })
-    asyncio.wait([PLAYERS[player_id].websocket.send(message), notify_draw_card(player_id, num)])
+    await PLAYERS[player_id].websocket.send(message)
+    await notify_draw_card(player_id, num)
 
 async def use_cards(player_id, cards):
     for card in cards:
@@ -265,18 +292,22 @@ async def use_card(player_id, card):
         return
     top_card = card
     card_type = get_card_type(card)
+    to_run = None
     if card_type == 'X':
         STATE['turn'].advance(skip_current=True)
     elif card_type == 'R':
         STATE['turn'].add_direction = not STATE['turn'].add_direction
     elif card_type == 'A':
-        pass
+        logging.info(PLAYERS[get_next_player()].name)
+        to_run = draw_cards(get_next_player(), 2, should_synced=False)
     elif card_type == 'W0':
         pass
     elif card_type == 'W1':
-        pass
+        to_run = draw_cards(get_next_player(), 4, should_synced=False)
     await dispose(card)
     await notify_use_card(player_id, card)
+    if to_run is not None:
+        await to_run
 
 async def notify_use_card(player_id, card):
     message = json.dumps({
