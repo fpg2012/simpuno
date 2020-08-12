@@ -27,7 +27,7 @@ async def register():
     global my_name
     global my_id
     global STATE
-    my_name = MY_NAME_BASE + str(random.randint(10, 99))
+    my_name = MY_NAME_BASE + str(random.randint(100, 999))
     await websocket.send(json.dumps({
         'action': 'register',
         'name': my_name
@@ -72,7 +72,7 @@ def is_compatible(card, top_card):
     return card[1] == top_card[1] or card[0] == top_card[0]
 
 def same_number(card_a, card_b):
-    if card_a[0] == 'W':
+    if card_a[0] == 'W' or card_b[0] == 'W':
         return False
     return card_a[1] == card_b[1]
 
@@ -124,6 +124,10 @@ async def draw_a_card():
     data = json.loads(result)
     if data['type'] == 'draw_result':
         my_cards.add(data['card'])
+
+async def draw_cards_passive(cards):
+    for card in cards:
+        my_cards.add(card)
 
 async def say_uno():
     await chat("UNO!!!")
@@ -187,6 +191,7 @@ async def handle_chat(chat_content):
 async def handle_messages():
     try:
         async for message in websocket:
+            logging.info(f'get message from server: {message}')
             data = json.loads(message)
             if data['type'] == 'chat_noti':
                 await handle_chat(data['content'])
@@ -197,6 +202,8 @@ async def handle_messages():
                 await update_top_card(data['card'])
             elif data['type'] == 'game_start':
                 await game_start(data['top_card'])
+            elif data['type'] == 'draw_cards_result':
+                await draw_cards_passive(data['cards'])
             elif data['type'] == 'game_end':
                 await game_end()
                 break
@@ -216,7 +223,7 @@ with open('config.json') as config:
     data = json.loads(config.read())
     print(data)
     if 'base_name' in data.keys():
-        MY_NAME_BASE = data['base_name']
+        MY_NAME_BASE = random.choice(data['base_name'])
     if 'uri' in data.keys():
         SERVER_URI = data['uri']
 logging.info(f'Server uri: {SERVER_URI}')
