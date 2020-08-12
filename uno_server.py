@@ -170,7 +170,7 @@ async def player_ready(player_id, ob=False):
         'result': result
         }))
     await notify_users()
-    if len(READY_PLAYERS) == len(PLAYERS) - len(OB_PLAYERS) and len(READY_PLAYERS) > 1:
+    if STATE == 0 and len(READY_PLAYERS) == len(PLAYERS) - len(OB_PLAYERS) and len(READY_PLAYERS) > 1:
         await start_game()
 
 async def start_game():

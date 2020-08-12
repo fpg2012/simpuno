@@ -217,7 +217,7 @@ function update_player_list(players_) {
             ready_message = "READY";
         }
         else if(element.ready == "obs") {
-            ready_message = "👀Ob";
+            ready_message = "Ob";
         }
         var temp_player_ready_t = document.createTextNode(ready_message);
         temp_player_name.appendChild(temp_player_name_t)
