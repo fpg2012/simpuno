@@ -186,7 +186,7 @@ async def handle_chat(chat_content):
         if STATE == 1:
             await ob()
     else:
-        await chat('啥玩意儿？能不能聊点👴听得懂的')
+        await chat(f'啥？聊点{MY_NAME_BASE}听得懂的')
 
 async def handle_messages():
     try:

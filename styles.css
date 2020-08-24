@@ -1,4 +1,32 @@
+@font-face {
+    font-family: 'JetBrains Mono';
+    src: local('JetBrains Mono'),
+    url('https://nth233.website/fonts/JetBrainsMono-Regular.woff2') format('woff2');
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: 'Segoe UI Emoji';
+    src: local('Segoe UI Emoji'),
+    url('./font/seguiemj.woff2') format('woff2');
+    font-weight: normal;
+}
+
+@font-face {
+    font-family: 'Segoe UI Emoji';
+    src: local('Segoe UI Emoji'),
+    url('./font/seguiemj.woff2') format('woff2');
+    font-weight: bold;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: local('Roboto'),
+    url('./font/Roboto-Regular.woff2') format('woff2');
+}
+
 body {
+    font-family: 'Roboto', 'Segoe UI Emoji', 'Noto Emoji', Arial, Helvetica, sans-serif;
     width: 15em;
     margin-left: calc((100vw - 15em)/2);
     margin-top: 50px;
@@ -33,26 +61,31 @@ body {
     width: 4em;
 }
 .red_card {
+    font-family: 'JetBrains Mono Regular';
     background-color: salmon;
     font-size: larger;
     color: darkred;
 }
 .green_card {
+    font-family: 'JetBrains Mono Regular';
     background-color: palegreen;
     font-size: larger;
     color: darkcyan;
 }
 .yellow_card {
+    font-family: 'JetBrains Mono Regular';
     background-color: wheat;
     font-size: larger;
     color: olive;
 }
 .blue_card {
+    font-family: 'JetBrains Mono Regular';
     background-color: lightblue;
     font-size: larger;
     color: darkslategray;
 }
 .wild_card {
+    font-family: 'JetBrains Mono Regular';
     background-color: darkslategray;
     font-size: large;
     color: whitesmoke;

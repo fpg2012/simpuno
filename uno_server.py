@@ -335,6 +335,7 @@ async def notify_turn_end(player_id, turn_number):
 
 async def game_end(player_id):
     await notify_game_end(player_id)
+    await notify_game_end(player_id)
     PLAYERS.clear()
     READY_PLAYERS.clear()
     DECK.clear()

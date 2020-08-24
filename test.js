@@ -226,12 +226,11 @@ function update_player_list(players_) {
         temp_player_line.appendChild(temp_player_ready);
         player_list.appendChild(temp_player_line);
     });
-    if(!mute_checkbox.checked) {
-        let temp_audio = document.getElementById("join1");
-        if(Math.random() > 0.5) {
-            temp_audio = document.getElementById("join2");
-        }
-        temp_audio.play();
+    if(Math.random() > 0.5) {
+        play_sound("join1");
+    }
+    else {
+        play_sound("join2");
     }
 }
 
@@ -378,9 +377,7 @@ function my_turn_start() {
     use_button.disabled = false;
     draw_button.disabled = false;
     selected_cards_in_order.length = 0;
-    if(!mute_checkbox.checked) {
-        on_turn_tone.play();
-    }
+    play_sound("on-turn-tone");
 }
 
 function turn_end(player_name, turn_number) {
@@ -472,6 +469,9 @@ function player_chat_info(player_name, message) {
     new_log_line.appendChild(new_log_line_t);
     new_log_line.setAttribute("class", "chat-message")
     log_list.insertBefore(new_log_line, log_list.children[0]);
+    if(player_name != my_name) {
+        play_sound("chat-sound");
+    }
 }
 
 function say_something() {
@@ -501,5 +501,12 @@ function init_color_radios() {
             }
             chosen_color_node.innerText = this.id[0];
         }
+    }
+}
+
+function play_sound(sound) {
+    let temp = document.getElementById(sound);
+    if(!mute_checkbox.checked) {
+        temp.play();
     }
 }
