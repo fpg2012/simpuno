@@ -96,14 +96,6 @@ async def my_turn_start():
         await use_cards(to_be_use)
         if len(my_cards) == 1:
             await say_uno()
-        elif len(my_cards) == 0:
-            await win()
-
-async def win():
-    await websocket.send(json.dumps({
-        'action': 'no_card',
-        'id': my_id
-    }))
 
 async def exit_and_observe():
     pass
