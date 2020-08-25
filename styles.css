@@ -34,7 +34,7 @@ body {
 #top-card {
     display: inline-block;
     width: 4em;
-    padding-left: 2em;
+    text-align: center;
 }
 #log-list {
     font-size: small;
@@ -62,15 +62,20 @@ body {
 }
 .player-name,
 .player-state,
-.player-card_quantity {
+.player-card-quantity {
     display: inline-block;
     margin-right: 0.5em;
 }
 .player-state {
     font-weight: bold;
 }
-.player-card_quantity {
-    background-color: seashell;
+.player-card-quantity {
+    border-left-color: wheat;
+    border-left-style: solid;
+    border-left-width: 0.2em;
+    width: 2em;
+    text-align: center;
+    background: lemonchiffon;
 }
 .red_card {
     font-family: 'JetBrains Mono Regular';
