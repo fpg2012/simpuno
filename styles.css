@@ -60,6 +60,18 @@ body {
     height: 2em;
     width: 4em;
 }
+.player-name,
+.player-state,
+.player-card_quantity {
+    display: inline-block;
+    margin-right: 0.5em;
+}
+.player-state {
+    font-weight: bold;
+}
+.player-card_quantity {
+    background-color: seashell;
+}
 .red_card {
     font-family: 'JetBrains Mono Regular';
     background-color: salmon;

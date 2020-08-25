@@ -40,7 +40,7 @@ convert_to_class["B"] = "blue_card";
 convert_to_class["Y"] = "yellow_card";
 convert_to_class["W"] = "wild_card";
 
-url_text.value = "wss://nth233.website:9019"
+url_text.value = "ws://localhost:9019"
 use_button.onclick = use_cards;
 draw_button.onclick = draw_a_card;
 say_button.onclick = say_something;
@@ -60,7 +60,52 @@ var state = {
 
 // unique id allocated by server 
 var my_id = 0, my_name = "hello";
-var cards, players;
+var cards;
+var players = new Map();
+
+class Player {
+    constructor(name, state, card_quantity) {
+        this.name = name;
+        this.card_quantity = card_quantity;
+        this.state = "waiting";
+
+        this.html_node = document.createElement("li");
+        this.html_node.setAttribute("id", "player-" + name)
+
+        let player_name_node = document.createElement("span");
+        player_name_node.setAttribute("class", "player-name");
+        let player_name_node_t = document.createTextNode(name);
+        player_name_node.appendChild(player_name_node_t);
+
+        let player_state_node = document.createElement("span");
+        player_state_node.setAttribute("class", "player-state");
+        let player_state_node_t = document.createTextNode(state);
+        player_state_node.appendChild(player_state_node_t);
+        
+        let player_card_quantity = document.createElement("span");
+        player_card_quantity.setAttribute("class", "player-card-quantity");
+
+        if(card_quantity == 0) {
+            player_card_quantity.setAttribute("hidden", "");
+        }
+
+        this.html_node.appendChild(player_name_node);
+        this.html_node.appendChild(player_state_node);
+        this.html_node.appendChild(player_card_quantity);
+
+        player_list.appendChild(this.html_node);
+    }
+
+    update() {
+        // this.html_node.getElementsByClassName("player-name").innerText = state
+        this.html_node.getElementsByClassName("player-state")[0].innerText = this.state;
+        let card_q = this.html_node.getElementsByClassName("player-card-quantity")[0];
+        if(card_q.hasAttribute("hidden") && (this.card_quantity > 0 || (this.state == "ready" && state.value >= 2 && state.value <= 4 || state.value == 9))) {
+            card_q.removeAttribute("hidden");
+        }
+        card_q.innerText = this.card_quantity;
+    }
+}
 
 join_button.onclick = function() {
     if(name_text.value.trim() == "") {
@@ -121,9 +166,11 @@ function manage(event) {
         case "game_start":
             game_start(data.top_card);
             break;
-        case "user_noti":
-            console.log("players")
-            update_player_list(data.players)
+        case "player_state_change":
+            update_player_list(data.name, data.to_state);
+            break;
+        case "init_players":
+            init_players(data.players);
             break;
         case "use_noti":
             use_card_others(data.player, data.card);
@@ -168,6 +215,15 @@ function manage(event) {
     }
 }
 
+function init_players(pls) {
+    let len = pls.length;
+    for(let i = 0;i < len;i++) {
+        let temp = new Player(pls[i].name, pls[i].state, pls[i].card_q);
+        players.set(pls[i].name, temp);
+        temp.update();
+    }
+}
+
 function disable_everything() {
     log_message("Please Reload!");
     let all_input = document.getElementsByTagName("input");
@@ -184,7 +240,7 @@ function ready() {
 
 function ready_ob() {
     state.value = 9;
-    document.getElementById("operation-area").style.display = "none";
+    document.getElementById("cards-area").setAttribute("hidden", "");
     ready_button.disabled = true;
 }
 
@@ -204,33 +260,64 @@ function send_ob() {
     }));
 }
 
-function update_player_list(players_) {
-    players = players_;
-    player_list.innerHTML = "";
-    players.forEach(element => {
-        var temp_player_line = document.createElement("li");
-        var temp_player_name = document.createElement("span");
-        var temp_player_ready = document.createElement("b");
-        var temp_player_name_t = document.createTextNode(element.name + ",");
-        var ready_message = "waiting";
-        if(element.ready == "yes") {
-            ready_message = "READY";
-        }
-        else if(element.ready == "obs") {
-            ready_message = "Ob";
-        }
-        var temp_player_ready_t = document.createTextNode(ready_message);
-        temp_player_name.appendChild(temp_player_name_t)
-        temp_player_ready.appendChild(temp_player_ready_t);
-        temp_player_line.appendChild(temp_player_name);
-        temp_player_line.appendChild(temp_player_ready);
-        player_list.appendChild(temp_player_line);
-    });
-    if(Math.random() > 0.5) {
-        play_sound("join1");
-    }
-    else {
-        play_sound("join2");
+// function update_player_list() {
+//     player_list.innerHTML = "";
+//     players.forEach(element => {
+//         var temp_player_line = document.createElement("li");
+//         var temp_player_name = document.createElement("span");
+//         var temp_player_ready = document.createElement("b");
+//         var temp_player_name_t = document.createTextNode(element.name + ",");
+//         var ready_message = "waiting";
+//         if(element.ready == "yes") {
+//             ready_message = "READY";
+//         }
+//         else if(element.ready == "obs") {
+//             ready_message = "Ob";
+//         }
+//         var temp_player_ready_t = document.createTextNode(ready_message);
+//         temp_player_name.appendChild(temp_player_name_t)
+//         temp_player_ready.appendChild(temp_player_ready_t);
+//         temp_player_line.appendChild(temp_player_name);
+//         temp_player_line.appendChild(temp_player_ready);
+//         player_list.appendChild(temp_player_line);
+//     });
+//     if(Math.random() > 0.5) {
+//         play_sound("join1");
+//     }
+//     else {
+//         play_sound("join2");
+//     }
+// }
+
+function update_player_list(player_name, to_state) {
+    console.log(to_state);
+    switch(to_state) {
+        case "waiting":
+            if(player_name == my_name) {
+                return;
+            }
+            let cur_player = new Player(player_name, to_state, 0);
+            players.set(player_name, cur_player);
+            play_sound("join1");
+            break;
+        case "ready":
+            temp = players.get(player_name);
+            temp.state = to_state;
+            temp.update();
+            play_sound("join2");
+            break;
+        case "exit":
+            temp_name = players.get(player_name).name;
+            players.delete(temp_name);
+            player_list.removeChild(document.getElementById("player-" + temp_name));
+            break;
+        case "ob":
+            temp = players.get(player_name);
+            temp.state = to_state;
+            temp.update();
+            break;
+        default:
+            console.log("Unknown State " + to_state);
     }
 }
 
@@ -240,19 +327,7 @@ function is_card_comaptible(card_a, card_b) {
     return card_a[0] == card_b[0] || card_a[1] == card_b[1] || card_a[0] == "W" || card_b[0] == "W";
 }
 
-// WILL BE REMOVE IN THE FUTURE
-function no_card() {
-    socket.send(JSON.stringify({
-        "action": "no_card",
-        "id": my_id
-    }));
-}
-
 function update_card_list(cards_) {
-    if(cards_.length == 0) {
-        no_card();
-        return;
-    }
     cards = cards_;
     cards.sort(function(a, b) {
         return a[1] - b[1];
@@ -363,6 +438,10 @@ function game_start(top_card_) {
     top_card = top_card_;
     update_top_card();
     document.getElementById("server-area").style.display = "none";
+    players.forEach(player => {
+        player.card_quantity = 7;
+        player.update();
+    })
 }
 
 function turn_start(player_name, turn_number) {
@@ -417,6 +496,9 @@ function draw_card_result(card) {
 function draw_card_others(player_name, num) {
     log_message(
         player_name + " draw " + num.toString() + " card(s)");
+    let temp_player = players.get(player_name);
+    temp_player.card_quantity += num;
+    temp_player.update();
 }
 
 function use_cards() {
@@ -440,6 +522,11 @@ function use_card_others(player_name, card) {
         update_card_list(cards);
         selected_cards_in_order.length = 0;
     }
+
+    let temp_player = players.get(player_name);
+    temp_player.card_quantity -= 1;
+    temp_player.update();
+
     top_card = card;
     update_top_card();
     use_card_message(player_name, card);

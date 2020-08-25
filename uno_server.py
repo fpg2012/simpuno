@@ -4,6 +4,7 @@ import websockets
 import logging
 import asyncio
 import ssl
+import multiset
 
 PLAYERS = {}
 READY_PLAYERS = set()
@@ -34,6 +35,32 @@ class Player:
         self.id = id
         self.name = name
         self.websocket = websocket
+        self.hand_cards = multiset.Multiset()
+        self.state = 'waiting'
+    
+    def has_card(self, card):
+        return card in self.hand_cards
+    
+    def has_cards(self, cards):
+        flag = True
+        for card in cards:
+            if card not in self.hand_cards:
+                flag = False
+                break
+        return flag
+    
+    def card_quantity(self):
+        return len(self.hand_cards)
+    
+    def dispose_card(self, card):
+        self.hand_cards.remove(card, 1)
+
+    def get_card(self, card):
+        self.hand_cards.add(card)
+    
+    def get_cards(self, cards):
+        for card in cards:
+            self.get_card(card)
 
 class Turn:
 
@@ -119,6 +146,7 @@ async def init_draw_cards():
             "type": "init_cards",
             "cards": cards
         })
+        PLAYERS[player].get_cards(cards)
         await PLAYERS[player].websocket.send(message)
 
 def get_current_player():
@@ -144,6 +172,9 @@ async def get_top():
 async def dispose(card):
     DECK.insert(0, card)
 
+async def broadcast(message):
+    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+
 async def register(name, websocket, ob=False):
     if name in [pl.name for _, pl in PLAYERS.items()]:
         await websocket.send(json.dumps({
@@ -162,7 +193,10 @@ async def register(name, websocket, ob=False):
         'result': 'ok',
         'id': player_id
         }))
-    await notify_users()
+    # await notify_users()
+    player.state = 'waiting'
+    await tell_players(player_id)
+    await notify_player_state_change(player_id, 'waiting')
     if ob:
         await player_ready(player_id, ob=True)
 
@@ -170,16 +204,18 @@ async def unregister(websocket):
     if len(PLAYERS) == 0:
         return
     k = 0
-    for id, pl in PLAYERS.items():
+    for player_id, pl in PLAYERS.items():
         if pl.websocket == websocket:
-            k = id
+            k = player_id
             break
+    if STATE['value'] == 0 or PLAYERS[k] in OB_PLAYERS:
+        await notify_player_state_change(k, 'exit')
     PLAYERS.pop(k)
     if id in READY_PLAYERS:
         READY_PLAYERS.remove(k)
     elif id in OB_PLAYERS:
         OB_PLAYERS.remove(k)
-    await notify_users()
+    # await notify_users()
 
 async def player_ready(player_id, ob=False):
     if not ob:
@@ -188,15 +224,42 @@ async def player_ready(player_id, ob=False):
         OB_PLAYERS.add(player_id)
     websocket = PLAYERS[player_id].websocket
     result = 'ok'
+    to_state = 'ready'
     if ob:
         result = 'ob'
+        to_state = 'ob'
     await websocket.send(json.dumps({
         'type': 'ready_result', 
         'result': result
         }))
-    await notify_users()
+    # await notify_users()
+    PLAYERS[player_id].state = to_state
+    await notify_player_state_change(player_id, to_state)
     if STATE['value'] == 0 and len(READY_PLAYERS) == len(PLAYERS) - len(OB_PLAYERS) and len(READY_PLAYERS) > 1:
         await start_game()
+
+async def tell_players(player_id):
+    data = {
+        'type': 'init_players',
+        'players': []
+    }
+    for _, pl in PLAYERS.items():
+        data['players'].append({
+            'name': pl.name,
+            'state': pl.state,
+            'card_q': pl.card_quantity()
+        })
+    message = json.dumps(data)
+    await PLAYERS[player_id].websocket.send(message)
+
+
+async def notify_player_state_change(player_id, to_state):
+    message = json.dumps({
+        'type': 'player_state_change',
+        'to_state': to_state,
+        'name': PLAYERS[player_id].name
+    })
+    await broadcast(message)
 
 async def start_game():
     init_deck()
@@ -223,19 +286,20 @@ async def notify_game_start():
         'type': 'game_start',
         'top_card': top_card
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
-async def notify_users():
-    player_list = []
-    for id, pl in PLAYERS.items():
-        ready = 'no'
-        if id in READY_PLAYERS:
-            ready = 'yes'
-        elif id in OB_PLAYERS:
-            ready = 'obs'
-        player_list.append({'name': pl.name, 'ready': ready})
-    message = json.dumps({'type': 'user_noti', 'players': player_list})
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+# deprecicated
+# async def notify_users():
+#     player_list = []
+#     for id, pl in PLAYERS.items():
+#         ready = 'no'
+#         if id in READY_PLAYERS:
+#             ready = 'yes'
+#         elif id in OB_PLAYERS:
+#             ready = 'obs'
+#         player_list.append({'name': pl.name, 'ready': ready})
+#     message = json.dumps({'type': 'user_noti', 'players': player_list})
+#     await broadcast(message)
 
 async def notify_draw_card(player_id, num):
     message = json.dumps({
@@ -243,7 +307,7 @@ async def notify_draw_card(player_id, num):
         'player': PLAYERS[player_id].name,
         'num': num
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
 async def draw_card(player_id, should_synced=True):
     if should_synced and not is_synced(player_id):
@@ -253,6 +317,7 @@ async def draw_card(player_id, should_synced=True):
         'type': 'draw_result',
         'card': card
     })
+    PLAYERS[player_id].get_card(card)
     await PLAYERS[player_id].websocket.send(message)
     await notify_draw_card(player_id, 1)
 
@@ -267,6 +332,7 @@ async def draw_cards(player_id, num, should_synced=True):
         'type': 'draw_cards_result',
         'cards': cards
     })
+    PLAYERS[player_id].get_cards(cards)
     await PLAYERS[player_id].websocket.send(message)
     await notify_draw_card(player_id, num)
 
@@ -285,10 +351,13 @@ def get_card_type(card):
 async def use_card(player_id, card):
     global top_card
     if not is_synced(player_id):
-        logging.error(f'Game seem not synced. Someone try to use a card outside its turn.')
+        logging.error(f'Game seem not synced. {player_id} try to use a card outside its turn.')
         return
     if not is_compatible(card, top_card):
         logging.error(f'Incompatible card {card}! top card: {top_card}')
+        return
+    if not PLAYERS[player_id].has_card(card):
+        logging.error(f'Game seem not synced. {player_id} try to use a card that it does not have')
         return
     top_card = card
     card_type = get_card_type(card)
@@ -305,7 +374,10 @@ async def use_card(player_id, card):
     elif card_type == 'W1':
         to_run = draw_cards(get_next_player(), 4, should_synced=False)
     await dispose(card)
+    PLAYERS[player_id].dispose_card(card)
     await notify_use_card(player_id, card)
+    if PLAYERS[player_id].card_quantity() == 0:
+        to_run = game_end(player_id)
     if to_run is not None:
         await to_run
 
@@ -315,7 +387,7 @@ async def notify_use_card(player_id, card):
         'player': PLAYERS[player_id].name, 
         'card': card
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
 async def notify_turn_start(player_id, turn_number):
     message = json.dumps({
@@ -323,7 +395,7 @@ async def notify_turn_start(player_id, turn_number):
         'player': PLAYERS[player_id].name, 
         'number': turn_number
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
 async def notify_turn_end(player_id, turn_number):
     message = json.dumps({
@@ -331,11 +403,11 @@ async def notify_turn_end(player_id, turn_number):
         'player': PLAYERS[player_id].name,
         'number': turn_number
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
 async def game_end(player_id):
     await notify_game_end(player_id)
-    await notify_game_end(player_id)
+    # await notify_game_end(player_id)
     PLAYERS.clear()
     READY_PLAYERS.clear()
     DECK.clear()
@@ -351,13 +423,13 @@ async def notify_game_end(player_id):
         'type': 'game_end', 
         'winner': winner_name
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
 async def notify_server_close():
     message = json.dumps({
         'type': 'server_close',
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
 async def notify_player_chat(player_id, message):
     message = json.dumps({
@@ -365,7 +437,7 @@ async def notify_player_chat(player_id, message):
         'player': PLAYERS[player_id].name,
         'content': message
         })
-    await asyncio.wait([pl.websocket.send(message) for _, pl in PLAYERS.items()])
+    await broadcast(message)
 
 async def start_server(websocket, path):
     try:
