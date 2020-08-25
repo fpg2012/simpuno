@@ -40,7 +40,7 @@ convert_to_class["B"] = "blue_card";
 convert_to_class["Y"] = "yellow_card";
 convert_to_class["W"] = "wild_card";
 
-url_text.value = "ws://localhost:9019"
+url_text.value = "wss://nth233.website:9019"
 use_button.onclick = use_cards;
 draw_button.onclick = draw_a_card;
 say_button.onclick = say_something;
