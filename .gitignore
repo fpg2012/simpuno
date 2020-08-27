@@ -1,0 +1,4 @@
+server*.log
+robot/robot.log
+font/*.ttf
+font/seguiemj.*
